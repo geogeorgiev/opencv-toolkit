@@ -1,0 +1,27 @@
+FROM gooshan/ubuntu-dev
+RUN apt-get update \
+  && apt-get upgrade -y 
+RUN apt-get install -y --force-yes libatlas-base-dev gfortran \
+  libavcodec-dev libavformat-dev libswscale-dev libv4l-dev \
+  libpng-dev libtiff5-dev libjasper-dev libjpeg-dev \
+  python-numpy python3-dev 
+RUN pip3 install numpy
+ADD sources/opencv-3.1.0 /root/opencv-3.1.0
+ADD sources/opencv_contrib-3.1.0 /root/opencv_contrib-3.1.0
+WORKDIR /root/opencv-3.1.0
+RUN mkdir build
+WORKDIR /root/opencv-3.1.0/build
+RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D INSTALL_PYTHON_EXAMPLES=ON \
+    -D PYTHON3_EXECUTABLE=/usr/bin/python3 \
+    -D INSTALL_C_EXAMPLES=OFF \
+    -D BUILD_OPENCV_HDF5=OFF \
+    -D OPENCV_EXTRA_MODULES_PATH=/root/opencv_contrib-3.1.0/modules \
+    -D BUILD_EXAMPLES=ON ..
+RUN make -j$(nproc)
+RUN make install
+RUN ldconfig
+RUN rm -rf /root/opencv-3.1.0 /root/opencv_contrib-3.1.0
+RUN ln /dev/null /dev/raw1394
+WORKDIR /root
